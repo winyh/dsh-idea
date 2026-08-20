@@ -1,5 +1,7 @@
 # 创意发现（dsh-idea）
 
+中文 | [English](./README.md)
+
 `dsh-idea` 是一个面向外部机会、市场变化和真实需求发现的 DeepSeek Harness 插件包。
 
 它把“找 idea”变成一条可复用的工作流：
@@ -7,6 +9,51 @@
 > 信号 → 问题 → 机会 → 候选 idea → 最小验证实验
 
 插件采用 external-first 方式：优先扫描用户指定的公开网页和外部市场信号；本地 Markdown、CSV、TSV、JSON 和 JSONL 只是可选的缓存、导出和补充证据输入。
+
+## 插件定位：需求发现层
+
+`dsh-idea` 负责把外部信号整理成可验证的需求和机会，不把未经验证的想法直接当成产品需求。
+
+- **主责：** 外部市场信号、真实痛点、目标用户与场景、机会主题、候选方案和最小可证伪实验。
+- **输出：** 机会主题、目标用户、痛点证据、候选方向、访谈提纲和实验计划，交给 `dsh-product`；由 `dsh-business` 同步评估商业价值。
+- **边界：** 不负责产品交付、定价设计、销售成交、增长分析或 SEO/GEO 内容执行。
+
+## 定位架构：商业策略层 + 四段主链路
+
+```mermaid
+flowchart TB
+    S["dsh-business<br/>商业策略层<br/>价值 · 模式 · 定价 · 利润"]
+
+    subgraph MAIN["四段主链路"]
+        direction LR
+        A["1. 需求<br/>dsh-idea"] --> B["2. 产品<br/>dsh-product"]
+        B --> C["3. 营销<br/>dsh-geo + dsh-growth"]
+        C --> D["4. 变现执行<br/>dsh-sales"]
+    end
+
+    S -. "定义商业方向与边界" .-> A
+    D --> R["反馈<br/>成交 · 续费 · 收入 · 成本"]
+    R -->|产品迭代| B
+    R -->|新需求 / 新机会| A
+
+    classDef strategy fill:#FFF4D6,stroke:#B7791F,color:#5C4500
+    classDef stage fill:#E8F1FF,stroke:#3366CC,color:#173A7A
+    classDef feedback fill:#E8F7EE,stroke:#2F855A,color:#1C4532
+    class S strategy
+    class A,B,C,D stage
+    class R feedback
+```
+
+## 插件导航
+
+| 插件 | 分工 | 直接跳转 |
+|---|---|---|
+| `dsh-idea` | 外部机会、需求信号、候选方案和最小验证 | [README](./README.zh.md) |
+| `dsh-product` | 产品定义、POC/MVP、发布门槛和 PMF | [README](../dsh-product/README.zh.md) |
+| `dsh-business` | 横跨全链路的商业策略、价值、定价和盈利 | [README](../dsh-business/README.zh.md) |
+| `dsh-sales` | 变现执行：资格判断、商机推进、成交、扩单和续约 | [README](../dsh-sales/README.zh.md) |
+| `dsh-growth` | 获客、激活、留存、收入分析和增长实验 | [README](../dsh-growth/README.zh.md) |
+| `dsh-geo` | SEO/GEO/AEO、内容生产和搜索/答案引擎可发现性 | [README](../dsh-geo/README.zh.md) |
 
 ## 工具
 

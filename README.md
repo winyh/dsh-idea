@@ -1,5 +1,9 @@
 # dsh-idea
 
+English | [中文](./README.zh.md)
+
+`dsh-idea` 是一个面向外部机会、市场变化和真实需求发现的 DeepSeek Harness 插件包。
+
 `dsh-idea` is a DeepSeek Harness bundle for evidence-backed external opportunity discovery and product discovery.
 
 It turns “find an idea” into a repeatable operating loop:
@@ -24,16 +28,25 @@ The six plugins work together to turn a real demand signal into a deliverable pr
 ```mermaid
 flowchart TB
     S["dsh-business<br/>Commercial strategy layer<br/>Value · model · pricing · profit"]
-    A["Demand<br/>dsh-idea"] --> B["Product<br/>dsh-product"]
-    B --> C["Marketing<br/>dsh-geo + dsh-growth"]
-    C --> D["Monetization execution<br/>dsh-sales"]
-    S -.-> A
-    S -.-> B
-    S -.-> C
-    S -.-> D
-    D --> F["Deals · renewals · revenue · cost feedback"]
-    F -->|Product iteration| B
-    F -->|New demand / opportunities| A
+
+    subgraph MAIN["Four-stage core flow"]
+        direction LR
+        A["1. Demand<br/>dsh-idea"] --> B["2. Product<br/>dsh-product"]
+        B --> C["3. Marketing<br/>dsh-geo + dsh-growth"]
+        C --> D["4. Monetization execution<br/>dsh-sales"]
+    end
+
+    S -. "Sets commercial direction and guardrails" .-> A
+    D --> R["Feedback<br/>Deals · renewals · revenue · cost"]
+    R -->|Product iteration| B
+    R -->|New demand / opportunities| A
+
+    classDef strategy fill:#FFF4D6,stroke:#B7791F,color:#5C4500
+    classDef stage fill:#E8F1FF,stroke:#3366CC,color:#173A7A
+    classDef feedback fill:#E8F7EE,stroke:#2F855A,color:#1C4532
+    class S strategy
+    class A,B,C,D stage
+    class R feedback
 ```
 
 This plugin owns the demand stage: establish who has what pain in which context, how they solve it today and why it matters now; then hand the opportunity to [dsh-product](../dsh-product/README.md) while [dsh-business](../dsh-business/README.md) reviews commercial value. New problems, unmet needs and user contexts found during monetization return here for further research.
