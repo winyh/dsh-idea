@@ -4,6 +4,8 @@
 
 `dsh-idea` 是一个面向外部机会、市场变化和真实需求发现的 DeepSeek Harness 插件包。
 
+六插件公开协作契约：[SUITE.md](https://github.com/winyh/dsh-business/blob/main/SUITE.md)。
+
 它把“找 idea”变成一条可复用的工作流：
 
 > 信号 → 问题 → 机会 → 候选 idea → 最小验证实验

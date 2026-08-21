@@ -300,3 +300,21 @@ export interface OpportunitySolutionTree {
   warnings: string[]
   nextActions: string[]
 }
+
+export interface IdeaWatchlistDiff {
+  artifactType: 'idea-watchlist-diff'
+  generatedAt: string
+  items: Array<{
+    url: string
+    status: 'new' | 'changed' | 'unchanged' | 'failed'
+    changedFields: string[]
+    currentFetchedAt?: string
+    previousFetchedAt?: string
+    title?: string
+    excerpt?: string
+    warning?: string
+  }>
+  warnings: string[]
+  nextActions: string[]
+  markdown: string
+}

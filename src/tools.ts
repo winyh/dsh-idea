@@ -6,6 +6,7 @@ import { renderIdeaReport } from './reports.js'
 import { resultEnvelope, resultSchema, jsonValue, renderResult, type ResultLineage } from './output.js'
 import { buildIdeaOnboarding } from './onboarding.js'
 import { buildOpportunityHandoff } from './handoff.js'
+import { buildWatchlistDiff } from './watchlist.js'
 import type { IdeaDiscoveryServiceApi } from './service.js'
 import type { DiscoverySourceId, FileSystemLike, IdeaCandidate, IdeaConfig, IdeaSignal, InterviewMethod, SignalFilter, SignalSort, SignalSourceType } from './types.js'
 import { scanIdeaVault } from './vault.js'
@@ -129,6 +130,53 @@ function isInterviewMethod(value: string): value is InterviewMethod {
 }
 
 export function registerIdeaTools(ctx: Context, config: IdeaConfig, service: IdeaDiscoveryServiceApi, fs: FileSystemLike, web: WebLike): void {
+  ctx.tools.register(defineTool({
+    name: 'idea_watchlist_diff',
+    description: 'Fetch user-selected public pages and compare them with a previous bounded snapshot set. It reports changed fields without treating page changes as validated demand.',
+    parameters: {
+      urls: { type: 'array', required: true, items: { type: 'string' }, description: 'One to five public HTTP(S) URLs.' },
+      previousJson: { type: 'string', description: 'Optional JSON array or result envelope containing previous external source snapshots.' },
+    },
+    output: ideaOutput(config.maxResultChars),
+    async execute(args, exec) {
+      let previous: import('./web.js').ExternalSourceSnapshot[] = []
+      if (args.previousJson?.trim()) {
+        let parsed: unknown
+        try { parsed = JSON.parse(args.previousJson) as unknown } catch (error) { throw new Error(`previousJson must be valid JSON: ${error instanceof Error ? error.message : String(error)}`) }
+        const data = typeof parsed === 'object' && parsed !== null && 'data' in parsed ? (parsed as { data: unknown }).data : parsed
+        const sources = Array.isArray(data) ? data : typeof data === 'object' && data !== null && 'sources' in data ? (data as { sources: unknown }).sources : []
+        if (!Array.isArray(sources)) throw new Error('previousJson must contain an array of snapshots or a result with sources.')
+        previous = sources.filter((item): item is import('./web.js').ExternalSourceSnapshot => typeof item === 'object' && item !== null && typeof (item as { url?: unknown }).url === 'string')
+      }
+      const fetched = await fetchExternalSources(web, args.urls, config, undefined, exec.signal)
+      const result = buildWatchlistDiff(fetched.sources, previous)
+      result.warnings.push(...fetched.warnings)
+      return wrapResult(result, { lineage: fetched.sources.map((item) => ({ source: item.finalUrl ?? item.url })), nextActions: result.nextActions })
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'idea_apply_artifact',
+    description: 'Preview or apply an opportunity Markdown artifact under defaultRoot with an explicit confirmation and version guard.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Opportunity Markdown path under defaultRoot.' },
+      content: { type: 'string', required: true, description: 'Complete replacement Markdown content.' },
+      confirm: { type: 'boolean', required: true, description: 'false previews only; true applies the guarded write.' },
+    },
+    output: ideaOutput(config.maxResultChars),
+    async execute(args, exec) {
+      await ensureInsideRoot(fs, config, args.path, exec.signal)
+      const target = await fs.resolve(args.path, { signal: exec.signal })
+      const info = await fs.stat(target, exec.signal)
+      if (!info || info.type !== 'file') throw new Error(`File not found: ${args.path}`)
+      const current = await fs.readText(target, exec.signal)
+      const diff = { beforeLines: current.split(/\r?\n/).length, afterLines: args.content.split(/\r?\n/).length, changed: current !== args.content }
+      if (!args.confirm) return wrapResult({ status: 'preview-only', path: args.path, applied: false, diff }, { nextActions: ['审阅变化；确认后再次调用并设置 confirm=true。'] })
+      await fs.writeText(target, args.content, { kind: 'replaceIfVersion', version: info.version }, exec.signal)
+      return wrapResult({ status: 'applied', path: args.path, applied: true, guarded: true, diff }, { lineage: [{ source: args.path }] })
+    },
+  }))
+
   ctx.tools.register(defineTool({
     name: 'idea_external_scan',
     description: 'Scan user-selected public HTTP(S) pages for external opportunity and unmet-need signals. Uses anonymous public fetch only, returns bounded source snapshots and evidence limits, and does not claim demand from page popularity.',

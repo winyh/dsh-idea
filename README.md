@@ -6,6 +6,8 @@ English | [中文](./README.zh.md)
 
 `dsh-idea` is a DeepSeek Harness bundle for evidence-backed external opportunity discovery and product discovery.
 
+Public six-plugin collaboration contract: [SUITE.md](https://github.com/winyh/dsh-business/blob/main/SUITE.md).
+
 It turns “find an idea” into a repeatable operating loop:
 
 > signal → problem → opportunity → candidate idea → smallest useful test
