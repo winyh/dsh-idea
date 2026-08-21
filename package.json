@@ -13,6 +13,7 @@
   },
   "files": [
     "lib",
+    ".codex-plugin",
     "cordis.patch.yml",
     "README.md",
     "README.zh.md",
