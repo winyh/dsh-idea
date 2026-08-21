@@ -5,6 +5,7 @@ import { buildInterviewGuide, buildOpportunitySolutionTree, buildSourcePlan, sco
 import { renderIdeaReport } from './reports.js'
 import { resultEnvelope, resultSchema, jsonValue, renderResult, type ResultLineage } from './output.js'
 import { buildIdeaOnboarding } from './onboarding.js'
+import { buildOpportunityHandoff } from './handoff.js'
 import type { IdeaDiscoveryServiceApi } from './service.js'
 import type { DiscoverySourceId, FileSystemLike, IdeaCandidate, IdeaConfig, IdeaSignal, InterviewMethod, SignalFilter, SignalSort, SignalSourceType } from './types.js'
 import { scanIdeaVault } from './vault.js'
@@ -480,6 +481,20 @@ export function registerIdeaTools(ctx: Context, config: IdeaConfig, service: Ide
       }
       emitCompleted(ctx, 'review', args.path, result.warnings.length)
       return wrapResult(result, { lineage: [{ source: args.path }], nextActions: result.nextActions })
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'idea_opportunity_handoff',
+    description: 'Turn an idea_review result into a versioned opportunity handoff for dsh-product. Preserves the source, evidence, workarounds, riskiest assumption and validation experiment; it does not create a product requirement or claim demand validation.',
+    parameters: {
+      reviewJson: { type: 'string', required: true, description: 'JSON returned by idea_review.' },
+    },
+    output: ideaOutput(config.maxResultChars),
+    async execute(args) {
+      const review = reviewFromJson(args.reviewJson)
+      const handoff = buildOpportunityHandoff(review)
+      return wrapResult(handoff, { lineage: [{ source: review.source }], nextActions: handoff.nextActions })
     },
   }))
 

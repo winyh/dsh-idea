@@ -71,6 +71,8 @@ This plugin owns the demand stage: establish who has what pain in which context,
 | Validated user language, problems and search signals | [dsh-geo](../dsh-geo/README.md) | Which content will help target users find and trust us? |
 | Experiment results and new user feedback | Back to this plugin | Which opportunity, user or context needs more research? |
 
+`idea_opportunity_handoff` converts an `idea_review` result into the versioned `opportunity-handoff` contract (`handoffVersion: 1.0`). It preserves the source, target user, scene, problem, current workarounds, evidence, riskiest assumption and validation experiment for `dsh-product`. A `partial` handoff is an explicit research gap, not a product requirement.
+
 ## What it does
 
 - Scan public HTTP(S) pages from communities, issue trackers, reviews, trend pages, competitor pages or research reports without credentials.

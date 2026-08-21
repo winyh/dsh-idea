@@ -14,6 +14,7 @@
 - Generate JTBD, Mom Test, switching and critical-event interview guides.
 - Represent review results as an Opportunity Solution Tree with multiple solutions and experiments.
 - Provide an onboarding/readiness check and a structured review result.
+- Emit a versioned opportunity handoff that preserves evidence boundaries and the smallest validation experiment for dsh-product.
 
 ## Deliberate boundaries
 
