@@ -8,6 +8,12 @@ English | [中文](./README.zh.md)
 
 Public six-plugin collaboration contract: [SUITE.md](https://github.com/winyh/dsh-business/blob/main/SUITE.md).
 
+## 协作可靠
+
+`idea_artifact_review` 在机会交给产品前校验工件版本、稳定 ID、内容指纹和有效期；它不会把机会草案直接升级为产品需求。
+
+`idea_artifact_review` validates version, stable ID, content fingerprint and freshness before an opportunity is handed to product; it never turns an opportunity draft directly into a product requirement.
+
 It turns “find an idea” into a repeatable operating loop:
 
 > signal → problem → opportunity → candidate idea → smallest useful test

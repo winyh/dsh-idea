@@ -6,6 +6,8 @@
 
 六插件公开协作契约：[SUITE.md](https://github.com/winyh/dsh-business/blob/main/SUITE.md)。
 
+`idea_artifact_review` 在机会交给产品前校验版本、稳定 ID、内容指纹和有效期，不把机会草案直接升级为产品需求。
+
 它把“找 idea”变成一条可复用的工作流：
 
 > 信号 → 问题 → 机会 → 候选 idea → 最小验证实验

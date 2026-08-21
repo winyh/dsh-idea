@@ -7,6 +7,7 @@ import { resultEnvelope, resultSchema, jsonValue, renderResult, type ResultLinea
 import { buildIdeaOnboarding } from './onboarding.js'
 import { buildOpportunityHandoff } from './handoff.js'
 import { buildWatchlistDiff } from './watchlist.js'
+import { appendArtifactAudit, attachArtifactMetadata, contentHash, reviewArtifact } from './artifacts.js'
 import type { IdeaDiscoveryServiceApi } from './service.js'
 import type { DiscoverySourceId, FileSystemLike, IdeaCandidate, IdeaConfig, IdeaSignal, InterviewMethod, SignalFilter, SignalSort, SignalSourceType } from './types.js'
 import { scanIdeaVault } from './vault.js'
@@ -22,7 +23,7 @@ function wrapResult(value: unknown, options: { lineage?: ResultLineage[]; assump
     ? value.warnings.filter((warning): warning is string => typeof warning === 'string')
     : []
   return resultEnvelope({
-    data: jsonValue(value),
+    data: jsonValue(attachArtifactMetadata(value, { staleAfterDays: 90 })),
     warnings,
     assumptions: options.assumptions,
     lineage: options.lineage,
@@ -173,7 +174,9 @@ export function registerIdeaTools(ctx: Context, config: IdeaConfig, service: Ide
       const diff = { beforeLines: current.split(/\r?\n/).length, afterLines: args.content.split(/\r?\n/).length, changed: current !== args.content }
       if (!args.confirm) return wrapResult({ status: 'preview-only', path: args.path, applied: false, diff }, { nextActions: ['审阅变化；确认后再次调用并设置 confirm=true。'] })
       await fs.writeText(target, args.content, { kind: 'replaceIfVersion', version: info.version }, exec.signal)
-      return wrapResult({ status: 'applied', path: args.path, applied: true, guarded: true, diff }, { lineage: [{ source: args.path }] })
+      let audit: unknown
+      try { audit = await appendArtifactAudit(fs, config.defaultRoot, { action: 'apply', path: args.path, beforeHash: contentHash(current), afterHash: contentHash(args.content), approved: true }, exec.signal) } catch (error) { audit = { status: 'audit-failed', warning: error instanceof Error ? error.message : String(error) } }
+      return wrapResult({ status: 'applied', path: args.path, applied: true, guarded: true, diff, audit }, { lineage: [{ source: args.path }] })
     },
   }))
 
@@ -558,6 +561,23 @@ export function registerIdeaTools(ctx: Context, config: IdeaConfig, service: Ide
       const review = reviewFromJson(args.reviewJson)
       const tree = buildOpportunitySolutionTree(review, args.goal)
       return wrapResult({ externalFirst: true, tree, nextActions: tree.nextActions }, { lineage: [{ source: review.source }], nextActions: tree.nextActions })
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'idea_artifact_review',
+    description: 'Validate an idea-discovery artifact before handing it to dsh-product or another downstream plugin. Checks schema, stable ID and freshness.',
+    parameters: {
+      artifactJson: { type: 'string', required: true, description: 'JSON returned by a plugin tool.' },
+      expectedType: { type: 'string', description: 'Optional expected artifactType.' },
+    },
+    output: ideaOutput(config.maxResultChars),
+    async execute(args) {
+      let value: unknown
+      try { value = JSON.parse(args.artifactJson) as unknown } catch (error) { throw new Error(`artifactJson must be valid JSON: ${error instanceof Error ? error.message : String(error)}`) }
+      const data = typeof value === 'object' && value !== null && 'data' in value ? (value as { data: unknown }).data : value
+      const review = reviewArtifact(data, args.expectedType?.trim() || undefined)
+      return wrapResult({ artifactType: 'idea-artifact-review', generatedAt: new Date().toISOString(), ...review }, { nextActions: review.nextActions })
     },
   }))
 

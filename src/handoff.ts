@@ -1,4 +1,5 @@
 import type { ExperimentPlan, IdeaCandidate, IdeaReviewResult, OpportunityTheme } from './types.js'
+import { createArtifactId } from './artifacts.js'
 
 export interface OpportunityHandoff {
   schemaVersion: '1.0'
@@ -43,10 +44,6 @@ function markdownList(values: string[], fallback = '待补充'): string {
   return values.length > 0 ? values.map((value) => `- ${value}`).join('\n') : `- ${fallback}`
 }
 
-function artifactSlug(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64) || 'unknown'
-}
-
 export function buildOpportunityHandoff(review: IdeaReviewResult): OpportunityHandoff {
   const candidate = review.recommendedCandidate ?? review.candidates[0]
   const theme = themeForCandidate(review, candidate)
@@ -69,7 +66,7 @@ export function buildOpportunityHandoff(review: IdeaReviewResult): OpportunityHa
     ? ['交给 dsh-product 生成产品 Brief；不要在产品阶段重新做外部需求发现。', '把验证实验的成功/失败阈值和原始证据写回机会记录。']
     : ['补齐候选方向、来源证据和最小验证实验，再交给 dsh-product。']
   const generatedAt = new Date().toISOString()
-  const artifactId = `dsh-idea-opportunity-${artifactSlug(candidate?.id || title)}-${generatedAt.slice(0, 10)}`
+  const artifactId = createArtifactId({ artifactType: 'opportunity-handoff', title, candidateId: candidate?.id, source: review.source, riskiestAssumption, validationExperiment: review.experiment })
   const handoff: OpportunityHandoff = {
     schemaVersion: '1.0',
     artifactId,
