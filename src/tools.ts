@@ -1,5 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import { handoffParameters, receiveHandoff } from './handoff-receive.js'
 import { buildExperiment, filterSignals, normalizeSignals, signalQuality } from './signals.js'
 import { buildInterviewGuide, buildOpportunitySolutionTree, buildSourcePlan, scoreSignalSet } from './discovery.js'
 import { renderIdeaReport } from './reports.js'
@@ -561,6 +562,18 @@ export function registerIdeaTools(ctx: Context, config: IdeaConfig, service: Ide
       const review = reviewFromJson(args.reviewJson)
       const tree = buildOpportunitySolutionTree(review, args.goal)
       return wrapResult({ externalFirst: true, tree, nextActions: tree.nextActions }, { lineage: [{ source: review.source }], nextActions: tree.nextActions })
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'idea_handoff_receive',
+    description: 'Receive a supported upstream artifact with integrity, routing and evidence checks. Produce an owned, dated receipt for one initiative; acceptance is not approval or task completion. Read-only.',
+    parameters: handoffParameters,
+    output: ideaOutput(config.maxResultChars),
+    async execute(args, exec) {
+      exec.signal.throwIfAborted()
+      const receipt = receiveHandoff(JSON.parse(args.artifactJson) as unknown, args)
+      return wrapResult(receipt, { nextActions: receipt.nextActions })
     },
   }))
 
