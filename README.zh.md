@@ -14,6 +14,26 @@
 
 插件采用 external-first 方式：优先扫描用户指定的公开网页和外部市场信号；本地 Markdown、CSV、TSV、JSON 和 JSONL 只是可选的缓存、导出和补充证据输入。
 
+## DSH 基座兼容与安装
+
+已适配 DeepSeek Harness **0.1.5-rc.2**（2026-09-22 核对的 npm `latest` 通道）及 Cordis 4.0.2。Node.js 要求为 `^22.19.0 || >=24.0.0`。DSH peer 依赖锁定为本次验证版本，其他发布通道需要重新验证兼容性。
+
+```sh
+npm install -g @deepseek-ai/dsh@0.1.5-rc.2
+dsh --version
+dsh plugin --profile web add github:winyh/dsh-idea
+dsh --profile web --dump-config
+dsh web
+```
+
+插件应安装到实际启动的 profile：使用 `dsh web` 时安装到 `web`；自定义 profile 则统一替换命令中的名称。安装到 `default` 不会在 `web` 中启用。更新后重启正在运行的 profile。
+
+GitHub 源码安装通过 `prepare` 构建入口。如果 pnpm 阻止构建，请先审阅代码，再将它提示的准确包名加入该 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds`，然后重试。需要可重复部署时固定已审阅的 Git 提交。也可以先运行 `pnpm pack`，再使用 `dsh plugin --profile web add ./package.tgz` 安装已构建的包。
+
+profile 提供 `tools` 和 `fs` 服务。还需提供 `web` 及其搜索、抓取提供器；标准 DSH 基座已经包含，自定义 profile 需显式配置。插件复用基座管理的提供器生命周期、代理和传输限制。私有 `docs/` 文档继续排除在 Git 和发布包之外。
+
+维护者运行 `pnpm install --frozen-lockfile` 后执行 `pnpm run verify`，即可完成类型检查、lint、单元测试、构建、包结构检查，以及 `plugin:runtime:validate`。运行验证通过 Cordis Loader 加载构建后的插件和真实 DSH 服务，检查工具可见性、文件读取、参数与输出校验、取消请求和卸载清理，无需 API Key。
+
 ## 插件定位：需求发现层
 
 `dsh-idea` 负责把外部信号整理成可验证的需求和机会，不把未经验证的想法直接当成产品需求。

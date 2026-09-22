@@ -1,7 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import Schema from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-fs'
-import * as webFetchHttp from '@deepseek-ai/dsh-web-fetch-http'
 import type {} from '@deepseek-ai/dsh-web'
 import { IdeaDiscoveryService } from './service.js'
 import { registerIdeaTools } from './tools.js'
@@ -35,16 +34,7 @@ export const Config: Schema<IdeaConfig> = Schema.object({
 
 export function apply(ctx: Context, config: IdeaConfig): void {
   const fs = (ctx as unknown as { fs: FileSystemLike }).fs
-  if (!ctx.registry.has(webFetchHttp)) {
-    void ctx.plugin(webFetchHttp, {
-      // Keep the shared provider defaults identical across dsh-idea, dsh-product and dsh-geo.
-      // Each plugin applies its own tighter result limits after fetching.
-      maxBodyChars: 100_000,
-      maxResponseBytes: 5_000_000,
-      timeoutMs: 30_000,
-      maxRedirects: 5,
-    })
-  }
+  // The profile owns web providers; share them without taking lifecycle ownership.
   const service = new IdeaDiscoveryService(ctx, fs, config)
   const web = (ctx as unknown as { web: WebLike }).web
   registerIdeaTools(ctx, config, service, fs, web)
