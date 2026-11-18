@@ -57,6 +57,14 @@ try {
     assert.equal(result.value.ok, true)
     assert.ok(result.value.data, 'result must contain structured business output')
   }
+  const review = { source: 'signals.csv', signalImport: { signals: [] }, opportunityMap: { themes: [] }, candidates: [], warnings: [] }
+  for (const [payload, expectedError] of [[review, false], [{ ok: true, data: review }, false],
+    [{ ok: false, data: review }, true], [{ data: review }, true]]) {
+    const handoff = await tools.execute({ name: 'idea_opportunity_handoff', arguments: { reviewJson: JSON.stringify(payload) },
+      callId: 'review-envelope', signal: new AbortController().signal })
+    assert.equal(handoff.isError, expectedError, JSON.stringify(handoff))
+    if (expectedError) assert.match(JSON.stringify(handoff.content), /unsuccessful idea_review/)
+  }
   const invalid = await invoke({ root: 42 })
   const webRead = await ctx.get('web').fetch({ url: 'https://example.com/evidence' })
   assert.equal(webRead.statusCode, 200)
